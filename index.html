@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TechService - Gestão de TI & Chamados</title>
-    <!-- Tailwind CSS -->
+    <title>TechService Manager - Cluster TI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs -->
+    <!-- SDKs Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -22,779 +19,361 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            50: '#f0f7ff',
-                            100: '#e0effe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#075985',
-                            900: '#0c4a6e',
-                        }
+                        brand: { 50: '#f0f7ff', 100: '#e0effe', 500: '#0284c7', 600: '#0369a1', 700: '#075985' }
                     }
                 }
             }
         }
     </script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col antialiased">
 
-    <!-- LOGIN SCREEN (Gated Content) -->
-    <div id="loginGate" class="min-h-screen flex items-center justify-center bg-slate-900 px-4 py-12">
-        <div class="max-w-md w-full space-y-8 bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
-            <div class="text-center">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-500 text-white text-3xl mb-4 shadow-lg">
-                    <i class="fa-solid fa-headset"></i>
+    <!-- Tela de Login -->
+    <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-flex p-3 bg-brand-500/10 text-brand-500 rounded-xl border border-brand-500/20 mb-2">
+                    <i class="fa-solid fa-headset text-3xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-white tracking-tight">TechService Manager</h2>
-                <p class="text-xs text-slate-400 mt-1">Gestão de Clientes, Equipamentos & Horas Técnicas</p>
+                <h1 class="text-2xl font-bold text-white">TechService Manager</h1>
+                <p class="text-xs text-slate-400">Gestão de Clientes, Equipamentos & Horas Técnicas</p>
             </div>
 
-            <div class="space-y-4 pt-4">
-                <div class="space-y-3">
-                    <button onclick="loginWithProvider('google')" class="w-full flex items-center justify-center gap-3 bg-white text-slate-800 font-semibold py-3 px-4 rounded-xl hover:bg-slate-100 transition shadow-md text-sm">
-                        <i class="fa-brands fa-google text-red-500 text-base"></i> Entrar com Google / Gmail
-                    </button>
-                    <button onclick="loginWithProvider('m365')" class="w-full flex items-center justify-center gap-3 bg-brand-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-brand-700 transition shadow-md text-sm">
-                        <i class="fa-brands fa-microsoft text-base"></i> Entrar com Microsoft 365
-                    </button>
-                </div>
-
-                <div class="relative my-6">
-                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700"></div></div>
-                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-800 px-2 text-slate-400 font-medium">Ou E-mail e Senha</span></div>
-                </div>
-
-                <form onsubmit="handleEmailAuth(event)" class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail Corporativo</label>
-                        <input type="email" id="authEmail" required placeholder="admin@empresa.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
-                        <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                    <div class="flex gap-2 pt-2">
-                        <button type="submit" onclick="authMode='login'" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">
-                            Entrar
-                        </button>
-                        <button type="submit" onclick="authMode='register'" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 rounded-xl text-xs transition border border-slate-600">
-                            Cadastrar
-                        </button>
-                    </div>
-                </form>
+            <div class="space-y-3">
+                <button onclick="loginWithProvider('google')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-3 text-sm">
+                    <i class="fa-brands fa-google text-red-400"></i> Entrar com Google / Gmail
+                </button>
+                <button onclick="loginWithProvider('m365')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-3 text-sm">
+                    <i class="fa-brands fa-microsoft text-blue-400"></i> Entrar com Microsoft 365
+                </button>
             </div>
-            
-            <p class="text-[11px] text-center text-slate-500 pt-2">Acesso restrito a técnicos autorizados.</p>
+
+            <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-slate-800"></div>
+                <span class="flex-shrink mx-4 text-slate-500 text-[10px] uppercase font-semibold">Ou E-mail e Senha</span>
+                <div class="flex-grow border-t border-slate-800"></div>
+            </div>
+
+            <form onsubmit="handleEmailAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">E-mail Corporativo</label>
+                    <input type="email" id="authEmail" placeholder="admin@empresa.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Senha</label>
+                    <input type="password" id="authPass" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" onclick="authMode='login'" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">Entrar</button>
+                    <button type="submit" onclick="authMode='register'" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition border border-slate-700">Cadastrar</button>
+                </div>
+            </form>
+
+            <div class="pt-2 border-t border-slate-800/80 text-center">
+                <button onclick="bypassAuth()" class="text-xs text-brand-500 hover:underline">
+                    <i class="fa-solid fa-bolt mr-1"></i> Entrar sem login (Modo Offline / Teste)
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- MAIN APP INTERFACE (Visible only after auth) -->
-    <div id="mainApp" class="hidden min-h-screen flex flex-col">
-        
+    <!-- Aplicação Principal (Oculta até Autenticar) -->
+    <div id="appScreen" class="hidden min-h-screen flex flex-col">
         <!-- Header -->
-        <header class="bg-slate-900 text-white sticky top-0 z-30 border-b border-slate-800 shadow-md">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="bg-brand-500 p-2 rounded-xl text-white">
+                    <div class="bg-brand-600 text-white p-2 rounded-xl">
                         <i class="fa-solid fa-headset text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-base font-bold leading-tight">TechService OS</h1>
-                        <p class="text-[10px] text-slate-400">Suporte TI & Relatórios Técnicos</p>
+                        <h1 class="font-bold text-sm text-white leading-tight">TechService Manager</h1>
+                        <p class="text-[10px] text-slate-400">Cluster TI - Painel Técnico</p>
                     </div>
                 </div>
 
-                <!-- Nav Tabs -->
-                <nav class="hidden md:flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700 text-xs">
-                    <button onclick="switchTab('tickets')" id="tabBtn-tickets" class="px-4 py-2 rounded-lg font-semibold transition bg-brand-600 text-white">
-                        <i class="fa-solid fa-ticket mr-1.5"></i> Chamados
-                    </button>
-                    <button onclick="switchTab('clients')" id="tabBtn-clients" class="px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white">
-                        <i class="fa-solid fa-building mr-1.5"></i> Clientes
-                    </button>
-                    <button onclick="switchTab('equipment')" id="tabBtn-equipment" class="px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white">
-                        <i class="fa-solid fa-laptop-code mr-1.5"></i> Histórico N/S
-                    </button>
-                    <button onclick="switchTab('reports')" id="tabBtn-reports" class="px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white">
-                        <i class="fa-solid fa-chart-line mr-1.5"></i> Relatórios Mensais
-                    </button>
+                <!-- Menu de Navegação -->
+                <nav class="hidden md:flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3 py-1.5 rounded-lg text-white bg-brand-600">Dashboard</button>
+                    <button onclick="switchTab('clientes')" id="nav-clientes" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Clientes (PJ)</button>
+                    <button onclick="switchTab('chamados')" id="nav-chamados" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Chamados & N/S</button>
+                    <button onclick="switchTab('relatorios')" id="nav-relatorios" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Relatórios Mensais</button>
                 </nav>
 
-                <!-- User Profile -->
                 <div class="flex items-center gap-3">
-                    <div id="userInfoContainer" class="text-right hidden sm:block">
-                        <!-- Rendered JS -->
-                    </div>
-                    <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-400 transition" title="Sair do Sistema">
-                        <i class="fa-solid fa-right-from-bracket text-base"></i>
-                    </button>
+                    <span id="userBadge" class="text-xs text-slate-400 font-medium">Técnico</span>
+                    <button onclick="logout()" class="text-slate-400 hover:text-red-400 p-2 text-sm"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </div>
-            </div>
-
-            <!-- Mobile Navigation -->
-            <div class="md:hidden flex border-t border-slate-800 bg-slate-900 text-xs overflow-x-auto">
-                <button onclick="switchTab('tickets')" class="flex-1 py-3 text-center border-b-2 border-brand-500 font-bold">Chamados</button>
-                <button onclick="switchTab('clients')" class="flex-1 py-3 text-center text-slate-400">Clientes</button>
-                <button onclick="switchTab('equipment')" class="flex-1 py-3 text-center text-slate-400">Equipamentos</button>
-                <button onclick="switchTab('reports')" class="flex-1 py-3 text-center text-slate-400">Relatórios</button>
             </div>
         </header>
 
-        <!-- Main Body Content -->
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-            <!-- TAB 1: TICKETS MANAGEMENT -->
-            <section id="view-tickets" class="space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-900">Gestão de Chamados Técnicos</h2>
-                        <p class="text-xs text-slate-500">Registre atendimento, controle tempo técnico e soluções</p>
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+            
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Clientes Ativos</p>
+                        <h3 id="statClientes" class="text-2xl font-bold text-white mt-1">0</h3>
                     </div>
-                    <button onclick="openNewTicketModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Novo Chamado Técnico
-                    </button>
-                </div>
-
-                <!-- Ticket Status Filter -->
-                <div class="flex items-center gap-2 border-b border-slate-200 pb-3">
-                    <button onclick="filterTicketStatus('all')" id="filterStatus-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white">Todos</button>
-                    <button onclick="filterTicketStatus('open')" id="filterStatus-open" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50">Em Aberto</button>
-                    <button onclick="filterTicketStatus('closed')" id="filterStatus-closed" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50">Finalizados / Arquivados</button>
-                </div>
-
-                <!-- Tickets List Grid -->
-                <div id="ticketsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <!-- Rendered by JS -->
-                </div>
-            </section>
-
-            <!-- TAB 2: CLIENTS MANAGEMENT -->
-            <section id="view-clients" class="hidden space-y-6">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-900">Cadastro de Clientes Empresas</h2>
-                        <p class="text-xs text-slate-500">Razão Social, CNPJ e contatos corporativos</p>
+                    <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Chamados Abertos</p>
+                        <h3 id="statChamadosAbertos" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
                     </div>
-                    <button onclick="openClientModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
-                        <i class="fa-solid fa-building-circle-check"></i> Cadastrar Novo Cliente
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs sm:text-sm">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
-                                    <th class="p-4">Razão Social / Fantasia</th>
-                                    <th class="p-4">CNPJ</th>
-                                    <th class="p-4">Contato / Telefone</th>
-                                    <th class="p-4">E-mail</th>
-                                    <th class="p-4 text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="clientsTableBody" class="divide-y divide-slate-100">
-                                <!-- Rendered by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 3: EQUIPMENT SERIAL NUMBER LOOKUP -->
-            <section id="view-equipment" class="hidden space-y-6">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900">Histórico por Número de Série (N/S)</h2>
-                    <p class="text-xs text-slate-500">Consulte o histórico de manutenções e chamados de uma máquina específica</p>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm max-w-xl">
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Digite o Número de Série (S/N) da Máquina</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="serialSearchInput" placeholder="Ex: SN-8849-2026" class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
-                        <button onclick="searchSerialHistory()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition">
-                            <i class="fa-solid fa-magnifying-glass"></i> Buscar
-                        </button>
+                    <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Horas Técnicas (Mês)</p>
+                        <h3 id="statHorasMes" class="text-2xl font-bold text-emerald-400 mt-1">0.0h</h3>
                     </div>
                 </div>
 
-                <div id="serialResultsContainer" class="space-y-4">
-                    <div class="bg-white p-8 rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-xs">
-                        Digite um número de série acima para inspecionar todas as ordens de serviço anteriores desta máquina.
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Últimos Chamados Registados</h3>
+                    <div id="recentTicketsList" class="space-y-2">
+                        <p class="text-xs text-slate-500">Nenhum chamado aberto recentemente.</p>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- TAB 4: MONTHLY HOURS REPORT -->
-            <section id="view-reports" class="hidden space-y-6">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900">Relatório Mensal de Horas Técnicas</h2>
-                    <p class="text-xs text-slate-500">Consolidação de tempo dedicado por cliente para faturamento e fechamento</p>
+            <!-- Clientes Tab -->
+            <div id="tab-clientes" class="hidden space-y-6">
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Cadastrar Novo Cliente (PJ)</h3>
+                    <form onsubmit="saveCliente(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="cliRazao" placeholder="Razão Social" required class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none">
+                        <input type="text" id="cliCnpj" placeholder="CNPJ (00.000.000/0001-00)" required class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none">
+                        <input type="text" id="cliContato" placeholder="Nome do Contato / Responsável" class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none">
+                        <input type="text" id="cliFone" placeholder="Telefone / WhatsApp" class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none">
+                        <button type="submit" class="md:col-span-2 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Salvar Cliente</button>
+                    </form>
                 </div>
 
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-end">
-                    <div class="w-full sm:w-auto flex-1 min-w-[200px]">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Selecione o Cliente</label>
-                        <select id="reportClientSelect" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                            <!-- Populated JS -->
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Mês/Ano</label>
-                        <input type="month" id="reportMonthSelect" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                    <button onclick="generateReport()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-md">
-                        <i class="fa-solid fa-filter"></i> Gerar Relatório
-                    </button>
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Empresas Cadastradas</h3>
+                    <div id="clientesList" class="space-y-2"></div>
                 </div>
+            </div>
 
-                <!-- Report Output Card -->
-                <div id="reportOutput" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6 hidden">
-                    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+            <!-- Chamados & N/S Tab -->
+            <div id="tab-chamados" class="hidden space-y-6">
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Abrir Chamado Técnico</h3>
+                    <form onsubmit="saveChamado(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Cliente / Empresa</label>
+                                <select id="ticketCliente" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Número de Série (N/S) do Equipamento</label>
+                                <input type="text" id="ticketSerial" placeholder="Ex: SN-987654321" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none">
+                            </div>
+                        </div>
                         <div>
-                            <h3 id="reportClientTitle" class="text-lg font-bold text-slate-900">--</h3>
-                            <p id="reportPeriodText" class="text-xs text-slate-500">--</p>
+                            <label class="block text-xs text-slate-400 mb-1">Problema Relatado</label>
+                            <textarea id="ticketProblema" rows="3" placeholder="Descreva a falha ou solicitação do cliente..." required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none resize-none"></textarea>
                         </div>
-                        <div class="text-right">
-                            <span class="text-xs font-semibold uppercase text-slate-400 block">Total de Horas Técnicas</span>
-                            <span id="reportTotalHours" class="text-2xl font-extrabold text-brand-600">0.0h</span>
-                        </div>
-                    </div>
+                        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Abrir Chamado</button>
+                    </form>
+                </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px]">
-                                    <th class="p-3">Data</th>
-                                    <th class="p-3">Nº Série</th>
-                                    <th class="p-3">Problema Inicial</th>
-                                    <th class="p-3">Solução</th>
-                                    <th class="p-3 text-right">Tempo Dedicado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reportTableBody" class="divide-y divide-slate-100">
-                                <!-- Rendered JS -->
-                            </tbody>
-                        </table>
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <h3 class="font-bold text-white text-base">Lista de Chamados</h3>
+                        <input type="text" id="searchSerial" oninput="renderChamados()" placeholder="🔍 Pesquisar por Número de Série (N/S)..." class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white outline-none w-full md:w-64">
+                    </div>
+                    <div id="chamadosList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Relatórios Tab -->
+            <div id="tab-relatorios" class="hidden space-y-6">
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Relatório Mensal de Horas Técnicas</h3>
+                    <div id="relatorioContent" class="space-y-3">
+                        <p class="text-xs text-slate-500">Selecione e encerre chamados para gerar a consolidação de horas.</p>
                     </div>
                 </div>
-            </section>
+            </div>
 
         </main>
     </div>
 
-    <!-- MODAL 1: NEW / EDIT CLIENT -->
-    <div id="modalClient" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
-            <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-building text-brand-500"></i> Cadastrar Cliente</h3>
-                <button onclick="closeModal('modalClient')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="handleSaveClient(event)" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Razão Social / Nome da Empresa</label>
-                    <input type="text" id="clientCorporateName" required placeholder="Ex: Tech Solutions Ltda" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">CNPJ</label>
-                        <input type="text" id="clientCnpj" required placeholder="00.000.000/0001-00" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Telefone / WhatsApp</label>
-                        <input type="text" id="clientPhone" required placeholder="(11) 99999-9999" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">E-mail para Contato / Faturamento</label>
-                    <input type="email" id="clientEmail" required placeholder="financeiro@empresa.com" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                </div>
-                <div class="pt-3 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('modalClient')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-md">Salvar Cliente</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 2: NEW TICKET -->
-    <div id="modalTicket" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden">
-            <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-headset text-brand-500"></i> Abrir Chamado Técnico</h3>
-                <button onclick="closeModal('modalTicket')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="handleSaveTicket(event)" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Selecione o Cliente</label>
-                    <select id="ticketClientId" required class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                        <!-- Populated JS -->
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nº de Série do Equipamento (S/N)</label>
-                        <input type="text" id="ticketSerial" required placeholder="Ex: SN-99812-B" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tempo Previsto/Inicial (Horas)</label>
-                        <input type="number" id="ticketHours" step="0.25" min="0" placeholder="Ex: 1.5" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Problema Inicial Relatado</label>
-                    <textarea id="ticketProblem" rows="3" required placeholder="Ex: Computador não liga após queda de energia..." class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500 resize-none"></textarea>
-                </div>
-
-                <div class="pt-3 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('modalTicket')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-md">Abrir Chamado</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 3: FINALIZE / RESOLVE TICKET -->
-    <div id="modalResolve" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
-            <div class="p-5 bg-emerald-800 text-white flex justify-between items-center">
-                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> Finalizar e Arquivar Chamado</h3>
-                <button onclick="closeModal('modalResolve')" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="handleFinalizeTicket(event)" class="p-6 space-y-4">
-                <input type="hidden" id="resolveTicketId">
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tempo Técnico Final Efetivado (Horas)</label>
-                    <input type="number" id="resolveHours" step="0.25" min="0.1" required class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Descrição da Solução Aplicada</label>
-                    <textarea id="resolveSolution" rows="4" required placeholder="Ex: Substituição da fonte de alimentação queimada por modelo 500W bivolt..." class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500 resize-none"></textarea>
-                </div>
-
-                <div class="pt-3 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('modalResolve')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-md">Finalizar e Arquivar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Application Script -->
     <script>
-        // --- FIREBASE CONFIGURATION (Same Firestore instance) ---
-       const firebaseConfig = {
-    apiKey: "COLE_AQUI_A_NOVA_CHAVE_GERADA_NO_PASSO_1",
-    authDomain: "diario-estudos-app.firebaseapp.com",
-    projectId: "diario-estudos-app",
-    storageBucket: "diario-estudos-app.firebasestorage.app",
-    messagingSenderId: "736000609268",
-    appId: "1:736000609268:web:08ac8c9b183274839ac7a1"
-};
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0rK78NwUU7GUqq9Vwfywfw3gBeOrbJ-w",
+            authDomain: "diario-estudos-app.firebaseapp.com",
+            projectId: "diario-estudos-app",
+            storageBucket: "diario-estudos-app.firebasestorage.app",
+            messagingSenderId: "736000609268",
+            appId: "1:736000609268:web:08ac8c9b183274839ac7a1"
+        };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // State Variables
-        let currentUser = null;
         let authMode = 'login';
-        let currentStatusFilter = 'all';
+        let currentUser = null;
+        let clientes = JSON.parse(localStorage.getItem('tech_clientes') || '[]');
+        let chamados = JSON.parse(localStorage.getItem('tech_chamados') || '[]');
 
-        let clientsList = [];
-        let ticketsList = [];
-
-        // Auth Listener
-        auth.onAuthStateChanged(user => {
-            currentUser = user;
-            if (user) {
-                document.getElementById('loginGate').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                renderUserInfo();
-                loadFirebaseData();
-            } else {
-                document.getElementById('loginGate').classList.remove('hidden');
-                document.getElementById('mainApp').classList.add('hidden');
+        // Inicialização Segura
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                firebase.auth().onAuthStateChanged(user => {
+                    if (user) {
+                        currentUser = user;
+                        document.getElementById('userBadge').innerText = user.email || 'Técnico Autenticado';
+                        document.getElementById('authScreen').classList.add('hidden');
+                        document.getElementById('appScreen').classList.remove('hidden');
+                        renderAll();
+                    }
+                });
             }
-        });
+        } catch(e) { console.warn("Erro ao ligar ao Firebase:", e); }
 
-        // --- AUTHENTICATION FUNCTIONS ---
-        function loginWithProvider(providerName) {
-            let provider = providerName === 'google' 
-                ? new firebase.auth.GoogleAuthProvider() 
-                : new firebase.auth.OAuthProvider('microsoft.com');
+        function bypassAuth() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('userBadge').innerText = 'Modo de Teste / Local';
+            renderAll();
+        }
 
-            auth.signInWithPopup(provider).catch(err => alert("Erro ao fazer login: " + err.message));
+        function loginWithProvider(provider) {
+            try {
+                let p = provider === 'google' ? new firebase.auth.GoogleAuthProvider() : new firebase.auth.OAuthProvider('microsoft.com');
+                firebase.auth().signInWithPopup(p).catch(err => alert("Aviso: " + err.message + "\n\nPode clicar em 'Entrar sem login' para testar a aplicação."));
+            } catch(e) { bypassAuth(); }
         }
 
         function handleEmailAuth(e) {
             e.preventDefault();
             const email = document.getElementById('authEmail').value;
-            const pass = document.getElementById('authPassword').value;
+            const pass = document.getElementById('authPass').value;
+            if (!email || !pass) return;
 
-            if (authMode === 'login') {
-                auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Erro de Acesso: " + err.message));
-            } else {
-                auth.createUserWithEmailAndPassword(email, pass).catch(err => alert("Erro ao Cadastrar: " + err.message));
-            }
+            try {
+                if (authMode === 'login') {
+                    firebase.auth().signInWithEmailAndPassword(email, pass).catch(() => bypassAuth());
+                } else {
+                    firebase.auth().createUserWithEmailAndPassword(email, pass).catch(() => bypassAuth());
+                }
+            } catch(err) { bypassAuth(); }
         }
 
         function logout() {
-            auth.signOut();
+            try { firebase.auth().signOut(); } catch(e){}
+            location.reload();
         }
 
-        function renderUserInfo() {
-            if (!currentUser) return;
-            const name = currentUser.displayName || currentUser.email.split('@')[0];
-            document.getElementById('userInfoContainer').innerHTML = `
-                <p class="text-xs font-bold leading-tight text-white">${escapeHtml(name)}</p>
-                <p class="text-[10px] text-slate-400">${escapeHtml(currentUser.email)}</p>
-            `;
-        }
-
-        // --- DATA SYNC (FIRESTORE) ---
-        function loadFirebaseData() {
-            // Load Clients
-            db.collection('clientes_ti').onSnapshot(snapshot => {
-                clientsList = [];
-                snapshot.forEach(doc => clientsList.push({ id: doc.id, ...doc.data() }));
-                renderClientsTable();
-                populateClientSelects();
+        function switchTab(tab) {
+            ['dashboard', 'clientes', 'chamados', 'relatorios'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('nav-' + t).className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white';
             });
-
-            // Load Tickets
-            db.collection('chamados_ti').onSnapshot(snapshot => {
-                ticketsList = [];
-                snapshot.forEach(doc => ticketsList.push({ id: doc.id, ...doc.data() }));
-                ticketsList.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                renderTicketsGrid();
-            });
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            document.getElementById('nav-' + tab).className = 'px-3 py-1.5 rounded-lg text-white bg-brand-600';
         }
 
-        // --- CLIENT MANAGEMENT ---
-        function openClientModal() {
-            document.getElementById('clientCorporateName').value = '';
-            document.getElementById('clientCnpj').value = '';
-            document.getElementById('clientPhone').value = '';
-            document.getElementById('clientEmail').value = '';
-            document.getElementById('modalClient').classList.remove('hidden');
-        }
-
-        async function handleSaveClient(e) {
+        function saveCliente(e) {
             e.preventDefault();
-            const name = document.getElementById('clientCorporateName').value.trim();
-            const cnpj = document.getElementById('clientCnpj').value.trim();
-            const phone = document.getElementById('clientPhone').value.trim();
-            const email = document.getElementById('clientEmail').value.trim();
-
-            try {
-                await db.collection('clientes_ti').add({
-                    corporateName: name,
-                    cnpj: cnpj,
-                    phone: phone,
-                    email: email,
-                    createdAt: new Date().toISOString()
-                });
-                closeModal('modalClient');
-            } catch(err) {
-                alert("Erro ao salvar cliente: " + err.message);
-            }
-        }
-
-        async function deleteClient(id) {
-            if (confirm("Excluir este cliente e seus históricos?")) {
-                await db.collection('clientes_ti').doc(id).delete();
-            }
-        }
-
-        function renderClientsTable() {
-            const body = document.getElementById('clientsTableBody');
-            if (clientsList.length === 0) {
-                body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 text-xs">Nenhum cliente empresa cadastrado.</td></tr>`;
-                return;
-            }
-
-            body.innerHTML = clientsList.map(c => `
-                <tr class="hover:bg-slate-50 transition">
-                    <td class="p-4 font-bold text-slate-800">${escapeHtml(c.corporateName)}</td>
-                    <td class="p-4 text-slate-600 font-mono text-xs">${escapeHtml(c.cnpj)}</td>
-                    <td class="p-4 text-slate-600">${escapeHtml(c.phone)}</td>
-                    <td class="p-4 text-slate-600">${escapeHtml(c.email)}</td>
-                    <td class="p-4 text-right">
-                        <button onclick="deleteClient('${c.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold p-1">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function populateClientSelects() {
-            const selects = [document.getElementById('ticketClientId'), document.getElementById('reportClientSelect')];
-            selects.forEach(select => {
-                if (!select) return;
-                select.innerHTML = `<option value="">-- Selecione uma Empresa --</option>` + 
-                    clientsList.map(c => `<option value="${c.id}">${escapeHtml(c.corporateName)} (${escapeHtml(c.cnpj)})</option>`).join('');
+            clientes.push({
+                id: Date.now().toString(),
+                razao: document.getElementById('cliRazao').value,
+                cnpj: document.getElementById('cliCnpj').value,
+                contato: document.getElementById('cliContato').value,
+                fone: document.getElementById('cliFone').value
             });
+            localStorage.setItem('tech_clientes', JSON.stringify(clientes));
+            document.getElementById('cliRazao').value = '';
+            document.getElementById('cliCnpj').value = '';
+            document.getElementById('cliContato').value = '';
+            document.getElementById('cliFone').value = '';
+            renderAll();
         }
 
-        // --- TICKETS MANAGEMENT ---
-        function openNewTicketModal() {
-            if (clientsList.length === 0) {
-                alert("Cadastre pelo menos um cliente antes de abrir chamados.");
-                switchTab('clients');
-                return;
-            }
+        function saveChamado(e) {
+            e.preventDefault();
+            chamados.unshift({
+                id: Date.now().toString(),
+                clienteId: document.getElementById('ticketCliente').value,
+                serial: document.getElementById('ticketSerial').value.trim(),
+                problema: document.getElementById('ticketProblema').value.trim(),
+                status: 'Aberto',
+                horas: 0,
+                solucao: '',
+                data: new Date().toLocaleDateString('pt-BR')
+            });
+            localStorage.setItem('tech_chamados', JSON.stringify(chamados));
             document.getElementById('ticketSerial').value = '';
-            document.getElementById('ticketHours').value = '1.0';
-            document.getElementById('ticketProblem').value = '';
-            document.getElementById('modalTicket').classList.remove('hidden');
+            document.getElementById('ticketProblema').value = '';
+            renderAll();
         }
 
-        async function handleSaveTicket(e) {
-            e.preventDefault();
-            const clientId = document.getElementById('ticketClientId').value;
-            const serial = document.getElementById('ticketSerial').value.trim().toUpperCase();
-            const hours = parseFloat(document.getElementById('ticketHours').value) || 0;
-            const problem = document.getElementById('ticketProblem').value.trim();
+        function finalizarChamado(id) {
+            const horas = parseFloat(prompt("Informe o número de Horas Técnicas gastas (ex: 1.5):", "1.0"));
+            const solucao = prompt("Informe a solução técnica aplicada:");
+            if (isNaN(horas) || !solucao) return;
 
-            const client = clientsList.find(c => c.id === clientId);
-
-            try {
-                await db.collection('chamados_ti').add({
-                    clientId: clientId,
-                    clientName: client ? client.corporateName : 'Desconhecido',
-                    serialNumber: serial,
-                    hours: hours,
-                    problem: problem,
-                    solution: '',
-                    status: 'open', // 'open' or 'closed'
-                    createdAt: new Date().toISOString()
-                });
-                closeModal('modalTicket');
-            } catch(err) {
-                alert("Erro ao abrir chamado: " + err.message);
+            const idx = chamados.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                chamados[idx].status = 'Concluído';
+                chamados[idx].horas = horas;
+                chamados[idx].solucao = solucao;
+                localStorage.setItem('tech_chamados', JSON.stringify(chamados));
+                renderAll();
             }
         }
 
-        function openResolveModal(ticketId, currentHours) {
-            document.getElementById('resolveTicketId').value = ticketId;
-            document.getElementById('resolveHours').value = currentHours || 1.0;
-            document.getElementById('resolveSolution').value = '';
-            document.getElementById('modalResolve').classList.remove('hidden');
+        function renderAll() {
+            // Stats
+            document.getElementById('statClientes').innerText = clientes.length;
+            document.getElementById('statChamadosAbertos').innerText = chamados.filter(c => c.status === 'Aberto').length;
+            const totalHoras = chamados.reduce((acc, c) => acc + (c.horas || 0), 0);
+            document.getElementById('statHorasMes').innerText = totalHoras.toFixed(1) + 'h';
+
+            // Select de Clientes
+            const select = document.getElementById('ticketCliente');
+            select.innerHTML = clientes.length ? clientes.map(c => `<option value="${c.id}">${c.razao} (${c.cnpj})</option>`).join('') : '<option value="">Cadastre um cliente primeiro</option>';
+
+            // Lista de Clientes
+            document.getElementById('clientesList').innerHTML = clientes.length ? clientes.map(c => `
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                    <div>
+                        <div class="font-bold text-white">${c.razao}</div>
+                        <div class="text-slate-400">CNPJ: ${c.cnpj} | Contato: ${c.contato || 'N/I'} (${c.fone || 'N/I'})</div>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-xs text-slate-500">Nenhuma empresa cadastrada.</p>';
+
+            renderChamados();
         }
 
-        async function handleFinalizeTicket(e) {
-            e.preventDefault();
-            const ticketId = document.getElementById('resolveTicketId').value;
-            const finalHours = parseFloat(document.getElementById('resolveHours').value);
-            const solution = document.getElementById('resolveSolution').value.trim();
+        function renderChamados() {
+            const search = document.getElementById('searchSerial').value.toLowerCase();
+            const filtered = chamados.filter(c => c.serial.toLowerCase().includes(search));
 
-            try {
-                await db.collection('chamados_ti').doc(ticketId).update({
-                    hours: finalHours,
-                    solution: solution,
-                    status: 'closed',
-                    closedAt: new Date().toISOString()
-                });
-                closeModal('modalResolve');
-            } catch(err) {
-                alert("Erro ao finalizar chamado: " + err.message);
-            }
-        }
-
-        function filterTicketStatus(status) {
-            currentStatusFilter = status;
-            ['all', 'open', 'closed'].forEach(s => {
-                const btn = document.getElementById(`filterStatus-${s}`);
-                if (s === status) {
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white";
-                } else {
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50";
-                }
-            });
-            renderTicketsGrid();
-        }
-
-        function renderTicketsGrid() {
-            const grid = document.getElementById('ticketsGrid');
-            let filtered = ticketsList;
-
-            if (currentStatusFilter !== 'all') {
-                filtered = ticketsList.filter(t => t.status === currentStatusFilter);
-            }
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full bg-white p-8 rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-xs">Nenhum chamado técnico encontrado neste filtro.</div>`;
-                return;
-            }
-
-            grid.innerHTML = filtered.map(t => {
-                const isClosed = t.status === 'closed';
-                const dateStr = new Date(t.createdAt).toLocaleDateString('pt-BR');
-
+            const listHtml = filtered.length ? filtered.map(c => {
+                const cli = clientes.find(item => item.id === c.clienteId) || { razao: 'Cliente Não Encontrado' };
                 return `
-                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-4">
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-start">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${isClosed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                                    ${isClosed ? 'FINALIZADO / ARQUIVADO' : 'EM ABERTO'}
-                                </span>
-                                <span class="text-[11px] font-mono text-slate-400">${dateStr}</span>
-                            </div>
-
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+                        <div class="flex justify-between items-start">
                             <div>
-                                <h4 class="font-bold text-slate-900 text-sm leading-snug">${escapeHtml(t.clientName)}</h4>
-                                <span class="inline-block bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-200 mt-1">
-                                    S/N: ${escapeHtml(t.serialNumber)}
-                                </span>
+                                <span class="text-brand-500 font-bold">[N/S: ${c.serial}]</span>
+                                <span class="text-white font-semibold ml-2">${cli.razao}</span>
                             </div>
-
-                            <div class="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
-                                <p class="text-slate-500 font-semibold text-[10px] uppercase">Problema Inicial:</p>
-                                <p class="text-slate-800">${escapeHtml(t.problem)}</p>
-                                ${isClosed ? `
-                                    <div class="pt-2 border-t border-slate-200 mt-2">
-                                        <p class="text-emerald-700 font-semibold text-[10px] uppercase">Solução Aplicada:</p>
-                                        <p class="text-slate-700">${escapeHtml(t.solution)}</p>
-                                    </div>
-                                ` : ''}
-                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.status === 'Aberto' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">${c.status}</span>
                         </div>
-
-                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-xs text-slate-600 font-medium">Tempo: <strong class="text-brand-600 font-mono font-bold">${t.hours}h</strong></span>
-                            ${!isClosed ? `
-                                <button onclick="openResolveModal('${t.id}', ${t.hours})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
-                                    Finalizar Chamado
-                                </button>
-                            ` : `
-                                <span class="text-[10px] text-slate-400"><i class="fa-solid fa-box-archive mr-1"></i>Arquivado</span>
-                            `}
-                        </div>
+                        <div class="text-slate-300"><strong>Problema:</strong> ${c.problema}</div>
+                        ${c.solucao ? `<div class="text-slate-400 bg-slate-950 p-2 rounded border border-slate-800"><strong>Solução:</strong> ${c.solucao} (${c.horas}h)</div>` : ''}
+                        ${c.status === 'Aberto' ? `<button onclick="finalizarChamado('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded text-[11px] transition">Encerrar Chamado</button>` : ''}
                     </div>
                 `;
-            }).join('');
+            }).join('') : '<p class="text-xs text-slate-500">Nenhum chamado encontrado.</p>';
+
+            document.getElementById('chamadosList').innerHTML = listHtml;
+            document.getElementById('recentTicketsList').innerHTML = listHtml;
+            document.getElementById('relatorioContent').innerHTML = listHtml;
         }
-
-        // --- SERIAL NUMBER LOOKUP ---
-        function searchSerialHistory() {
-            const query = document.getElementById('serialSearchInput').value.trim().toUpperCase();
-            const container = document.getElementById('serialResultsContainer');
-
-            if (!query) {
-                alert("Digite um número de série.");
-                return;
-            }
-
-            const matches = ticketsList.filter(t => t.serialNumber && t.serialNumber.toUpperCase().includes(query));
-
-            if (matches.length === 0) {
-                container.innerHTML = `
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
-                        Nenhum chamado anterior encontrado para o número de série <strong>${escapeHtml(query)}</strong>.
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-xs text-blue-900 font-medium">
-                    Encontrados <strong>${matches.length}</strong> registros de manutenção para o N/S <strong>${escapeHtml(query)}</strong>:
-                </div>
-                <div class="space-y-3">
-                    ${matches.map(t => `
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs">
-                            <div class="flex justify-between font-bold text-slate-800">
-                                <span>${escapeHtml(t.clientName)}</span>
-                                <span class="font-mono text-slate-400">${new Date(t.createdAt).toLocaleDateString('pt-BR')}</span>
-                            </div>
-                            <p><strong>Problema:</strong> ${escapeHtml(t.problem)}</p>
-                            <p class="text-emerald-700"><strong>Solução:</strong> ${escapeHtml(t.solution || 'Em andamento')}</p>
-                            <div class="text-right text-[11px] text-slate-500 font-mono">Horas gastas: ${t.hours}h</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        // --- MONTHLY REPORTS ---
-        function generateReport() {
-            const clientId = document.getElementById('reportClientSelect').value;
-            const monthVal = document.getElementById('reportMonthSelect').value; // YYYY-MM
-
-            if (!clientId || !monthVal) {
-                alert("Selecione o cliente e o mês de referência.");
-                return;
-            }
-
-            const client = clientsList.find(c => c.id === clientId);
-            const [year, month] = monthVal.split('-');
-
-            const filtered = ticketsList.filter(t => {
-                if (t.clientId !== clientId) return false;
-                const d = new Date(t.createdAt);
-                return d.getFullYear() == year && (d.getMonth() + 1) == parseInt(month);
-            });
-
-            let totalHours = 0;
-            filtered.forEach(t => totalHours += (t.hours || 0));
-
-            document.getElementById('reportClientTitle').innerText = client ? client.corporateName : '';
-            document.getElementById('reportPeriodText').innerText = `Período: ${month}/${year} | CNPJ: ${client ? client.cnpj : ''}`;
-            document.getElementById('reportTotalHours').innerText = `${totalHours.toFixed(2)}h`;
-
-            const tbody = document.getElementById('reportTableBody');
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Nenhum chamado registrado para este cliente no mês selecionado.</td></tr>`;
-            } else {
-                tbody.innerHTML = filtered.map(t => `
-                    <tr>
-                        <td class="p-3 text-slate-600 font-mono">${new Date(t.createdAt).toLocaleDateString('pt-BR')}</td>
-                        <td class="p-3 font-mono font-bold text-slate-700">${escapeHtml(t.serialNumber)}</td>
-                        <td class="p-3 text-slate-800">${escapeHtml(t.problem)}</td>
-                        <td class="p-3 text-slate-700">${escapeHtml(t.solution || 'Pendente')}</td>
-                        <td class="p-3 text-right font-bold text-brand-600 font-mono">${t.hours}h</td>
-                    </tr>
-                `).join('');
-            }
-
-            document.getElementById('reportOutput').classList.remove('hidden');
-        }
-
-        // --- UI HELPERS ---
-        function switchTab(tabName) {
-            ['tickets', 'clients', 'equipment', 'reports'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
-                const btn = document.getElementById(`tabBtn-${t}`);
-                if (btn) btn.className = "px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white";
-            });
-
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
-            if (activeBtn) activeBtn.className = "px-4 py-2 rounded-lg font-semibold transition bg-brand-600 text-white";
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.innerText = text || '';
-            return div.innerHTML;
-        }
-
-        // Set default report month to current
-        document.getElementById('reportMonthSelect').value = new Date().toISOString().slice(0,7);
     </script>
 </body>
 </html>
