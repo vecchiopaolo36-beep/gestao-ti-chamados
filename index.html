@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechService - Gestão de TI & Chamados</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- LOGIN SCREEN (Gated Content) -->
+    <div id="loginGate" class="min-h-screen flex items-center justify-center bg-slate-900 px-4 py-12">
+        <div class="max-w-md w-full space-y-8 bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
+            <div class="text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-500 text-white text-3xl mb-4 shadow-lg">
+                    <i class="fa-solid fa-headset"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">TechService Manager</h2>
+                <p class="text-xs text-slate-400 mt-1">Gestão de Clientes, Equipamentos & Horas Técnicas</p>
+            </div>
+
+            <div class="space-y-4 pt-4">
+                <div class="space-y-3">
+                    <button onclick="loginWithProvider('google')" class="w-full flex items-center justify-center gap-3 bg-white text-slate-800 font-semibold py-3 px-4 rounded-xl hover:bg-slate-100 transition shadow-md text-sm">
+                        <i class="fa-brands fa-google text-red-500 text-base"></i> Entrar com Google / Gmail
+                    </button>
+                    <button onclick="loginWithProvider('m365')" class="w-full flex items-center justify-center gap-3 bg-brand-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-brand-700 transition shadow-md text-sm">
+                        <i class="fa-brands fa-microsoft text-base"></i> Entrar com Microsoft 365
+                    </button>
+                </div>
+
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-800 px-2 text-slate-400 font-medium">Ou E-mail e Senha</span></div>
+                </div>
+
+                <form onsubmit="handleEmailAuth(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail Corporativo</label>
+                        <input type="email" id="authEmail" required placeholder="admin@empresa.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
+                        <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button type="submit" onclick="authMode='login'" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">
+                            Entrar
+                        </button>
+                        <button type="submit" onclick="authMode='register'" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 rounded-xl text-xs transition border border-slate-600">
+                            Cadastrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <p class="text-[11px] text-center text-slate-500 pt-2">Acesso restrito a técnicos autorizados.</p>
+        </div>
+    </div>
+
+    <!-- MAIN APP INTERFACE (Visible only after auth) -->
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="bg-slate-900 text-white sticky top-0 z-30 border-b border-slate-800 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-500 p-2 rounded-xl text-white">
+                        <i class="fa-solid fa-headset text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base font-bold leading-tight">TechService OS</h1>
+                        <p class="text-[10px] text-slate-400">Suporte TI & Relatórios Técnicos</p>
+                    </div>
+                </div>
+
+                <!-- Nav Tabs -->
+                <nav class="hidden md:flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700 text-xs">
+                    <button onclick="switchTab('tickets')" id="tabBtn-tickets" class="px-4 py-2 rounded-lg font-semibold transition bg-brand-600 text-white">
+                        <i class="fa-solid fa-ticket mr-1.5"></i> Chamados
+                    </button>
+                    <button onclick="switchTab('clients')" id="tabBtn-clients" class="px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white">
+                        <i class="fa-solid fa-building mr-1.5"></i> Clientes
+                    </button>
+                    <button onclick="switchTab('equipment')" id="tabBtn-equipment" class="px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white">
+                        <i class="fa-solid fa-laptop-code mr-1.5"></i> Histórico N/S
+                    </button>
+                    <button onclick="switchTab('reports')" id="tabBtn-reports" class="px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white">
+                        <i class="fa-solid fa-chart-line mr-1.5"></i> Relatórios Mensais
+                    </button>
+                </nav>
+
+                <!-- User Profile -->
+                <div class="flex items-center gap-3">
+                    <div id="userInfoContainer" class="text-right hidden sm:block">
+                        <!-- Rendered JS -->
+                    </div>
+                    <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-400 transition" title="Sair do Sistema">
+                        <i class="fa-solid fa-right-from-bracket text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div class="md:hidden flex border-t border-slate-800 bg-slate-900 text-xs overflow-x-auto">
+                <button onclick="switchTab('tickets')" class="flex-1 py-3 text-center border-b-2 border-brand-500 font-bold">Chamados</button>
+                <button onclick="switchTab('clients')" class="flex-1 py-3 text-center text-slate-400">Clientes</button>
+                <button onclick="switchTab('equipment')" class="flex-1 py-3 text-center text-slate-400">Equipamentos</button>
+                <button onclick="switchTab('reports')" class="flex-1 py-3 text-center text-slate-400">Relatórios</button>
+            </div>
+        </header>
+
+        <!-- Main Body Content -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+            <!-- TAB 1: TICKETS MANAGEMENT -->
+            <section id="view-tickets" class="space-y-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Gestão de Chamados Técnicos</h2>
+                        <p class="text-xs text-slate-500">Registre atendimento, controle tempo técnico e soluções</p>
+                    </div>
+                    <button onclick="openNewTicketModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Novo Chamado Técnico
+                    </button>
+                </div>
+
+                <!-- Ticket Status Filter -->
+                <div class="flex items-center gap-2 border-b border-slate-200 pb-3">
+                    <button onclick="filterTicketStatus('all')" id="filterStatus-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white">Todos</button>
+                    <button onclick="filterTicketStatus('open')" id="filterStatus-open" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50">Em Aberto</button>
+                    <button onclick="filterTicketStatus('closed')" id="filterStatus-closed" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50">Finalizados / Arquivados</button>
+                </div>
+
+                <!-- Tickets List Grid -->
+                <div id="ticketsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Rendered by JS -->
+                </div>
+            </section>
+
+            <!-- TAB 2: CLIENTS MANAGEMENT -->
+            <section id="view-clients" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Cadastro de Clientes Empresas</h2>
+                        <p class="text-xs text-slate-500">Razão Social, CNPJ e contatos corporativos</p>
+                    </div>
+                    <button onclick="openClientModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-building-circle-check"></i> Cadastrar Novo Cliente
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                                    <th class="p-4">Razão Social / Fantasia</th>
+                                    <th class="p-4">CNPJ</th>
+                                    <th class="p-4">Contato / Telefone</th>
+                                    <th class="p-4">E-mail</th>
+                                    <th class="p-4 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTableBody" class="divide-y divide-slate-100">
+                                <!-- Rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: EQUIPMENT SERIAL NUMBER LOOKUP -->
+            <section id="view-equipment" class="hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Histórico por Número de Série (N/S)</h2>
+                    <p class="text-xs text-slate-500">Consulte o histórico de manutenções e chamados de uma máquina específica</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm max-w-xl">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Digite o Número de Série (S/N) da Máquina</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="serialSearchInput" placeholder="Ex: SN-8849-2026" class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                        <button onclick="searchSerialHistory()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition">
+                            <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div id="serialResultsContainer" class="space-y-4">
+                    <div class="bg-white p-8 rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-xs">
+                        Digite um número de série acima para inspecionar todas as ordens de serviço anteriores desta máquina.
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: MONTHLY HOURS REPORT -->
+            <section id="view-reports" class="hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Relatório Mensal de Horas Técnicas</h2>
+                    <p class="text-xs text-slate-500">Consolidação de tempo dedicado por cliente para faturamento e fechamento</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-end">
+                    <div class="w-full sm:w-auto flex-1 min-w-[200px]">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Selecione o Cliente</label>
+                        <select id="reportClientSelect" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                            <!-- Populated JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Mês/Ano</label>
+                        <input type="month" id="reportMonthSelect" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <button onclick="generateReport()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-md">
+                        <i class="fa-solid fa-filter"></i> Gerar Relatório
+                    </button>
+                </div>
+
+                <!-- Report Output Card -->
+                <div id="reportOutput" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6 hidden">
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+                        <div>
+                            <h3 id="reportClientTitle" class="text-lg font-bold text-slate-900">--</h3>
+                            <p id="reportPeriodText" class="text-xs text-slate-500">--</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-semibold uppercase text-slate-400 block">Total de Horas Técnicas</span>
+                            <span id="reportTotalHours" class="text-2xl font-extrabold text-brand-600">0.0h</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px]">
+                                    <th class="p-3">Data</th>
+                                    <th class="p-3">Nº Série</th>
+                                    <th class="p-3">Problema Inicial</th>
+                                    <th class="p-3">Solução</th>
+                                    <th class="p-3 text-right">Tempo Dedicado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody" class="divide-y divide-slate-100">
+                                <!-- Rendered JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL 1: NEW / EDIT CLIENT -->
+    <div id="modalClient" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+            <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-building text-brand-500"></i> Cadastrar Cliente</h3>
+                <button onclick="closeModal('modalClient')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleSaveClient(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Razão Social / Nome da Empresa</label>
+                    <input type="text" id="clientCorporateName" required placeholder="Ex: Tech Solutions Ltda" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">CNPJ</label>
+                        <input type="text" id="clientCnpj" required placeholder="00.000.000/0001-00" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Telefone / WhatsApp</label>
+                        <input type="text" id="clientPhone" required placeholder="(11) 99999-9999" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">E-mail para Contato / Faturamento</label>
+                    <input type="email" id="clientEmail" required placeholder="financeiro@empresa.com" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modalClient')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-md">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: NEW TICKET -->
+    <div id="modalTicket" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden">
+            <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-headset text-brand-500"></i> Abrir Chamado Técnico</h3>
+                <button onclick="closeModal('modalTicket')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleSaveTicket(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Selecione o Cliente</label>
+                    <select id="ticketClientId" required class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                        <!-- Populated JS -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nº de Série do Equipamento (S/N)</label>
+                        <input type="text" id="ticketSerial" required placeholder="Ex: SN-99812-B" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tempo Previsto/Inicial (Horas)</label>
+                        <input type="number" id="ticketHours" step="0.25" min="0" placeholder="Ex: 1.5" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Problema Inicial Relatado</label>
+                    <textarea id="ticketProblem" rows="3" required placeholder="Ex: Computador não liga após queda de energia..." class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-500 resize-none"></textarea>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modalTicket')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-md">Abrir Chamado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: FINALIZE / RESOLVE TICKET -->
+    <div id="modalResolve" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+            <div class="p-5 bg-emerald-800 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> Finalizar e Arquivar Chamado</h3>
+                <button onclick="closeModal('modalResolve')" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleFinalizeTicket(event)" class="p-6 space-y-4">
+                <input type="hidden" id="resolveTicketId">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tempo Técnico Final Efetivado (Horas)</label>
+                    <input type="number" id="resolveHours" step="0.25" min="0.1" required class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Descrição da Solução Aplicada</label>
+                    <textarea id="resolveSolution" rows="4" required placeholder="Ex: Substituição da fonte de alimentação queimada por modelo 500W bivolt..." class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-emerald-500 resize-none"></textarea>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modalResolve')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-md">Finalizar e Arquivar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // --- FIREBASE CONFIGURATION (Same Firestore instance) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0rK78NwUU7GUqq9Vwfywfw3gBeOrbJ-w",
+            authDomain: "diario-estudos-app.firebaseapp.com",
+            projectId: "diario-estudos-app",
+            storageBucket: "diario-estudos-app.firebasestorage.app",
+            messagingSenderId: "736000609268",
+            appId: "1:736000609268:web:08ac8c9b183274839ac7a1"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // State Variables
+        let currentUser = null;
+        let authMode = 'login';
+        let currentStatusFilter = 'all';
+
+        let clientsList = [];
+        let ticketsList = [];
+
+        // Auth Listener
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('loginGate').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                renderUserInfo();
+                loadFirebaseData();
+            } else {
+                document.getElementById('loginGate').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        });
+
+        // --- AUTHENTICATION FUNCTIONS ---
+        function loginWithProvider(providerName) {
+            let provider = providerName === 'google' 
+                ? new firebase.auth.GoogleAuthProvider() 
+                : new firebase.auth.OAuthProvider('microsoft.com');
+
+            auth.signInWithPopup(provider).catch(err => alert("Erro ao fazer login: " + err.message));
+        }
+
+        function handleEmailAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+
+            if (authMode === 'login') {
+                auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Erro de Acesso: " + err.message));
+            } else {
+                auth.createUserWithEmailAndPassword(email, pass).catch(err => alert("Erro ao Cadastrar: " + err.message));
+            }
+        }
+
+        function logout() {
+            auth.signOut();
+        }
+
+        function renderUserInfo() {
+            if (!currentUser) return;
+            const name = currentUser.displayName || currentUser.email.split('@')[0];
+            document.getElementById('userInfoContainer').innerHTML = `
+                <p class="text-xs font-bold leading-tight text-white">${escapeHtml(name)}</p>
+                <p class="text-[10px] text-slate-400">${escapeHtml(currentUser.email)}</p>
+            `;
+        }
+
+        // --- DATA SYNC (FIRESTORE) ---
+        function loadFirebaseData() {
+            // Load Clients
+            db.collection('clientes_ti').onSnapshot(snapshot => {
+                clientsList = [];
+                snapshot.forEach(doc => clientsList.push({ id: doc.id, ...doc.data() }));
+                renderClientsTable();
+                populateClientSelects();
+            });
+
+            // Load Tickets
+            db.collection('chamados_ti').onSnapshot(snapshot => {
+                ticketsList = [];
+                snapshot.forEach(doc => ticketsList.push({ id: doc.id, ...doc.data() }));
+                ticketsList.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                renderTicketsGrid();
+            });
+        }
+
+        // --- CLIENT MANAGEMENT ---
+        function openClientModal() {
+            document.getElementById('clientCorporateName').value = '';
+            document.getElementById('clientCnpj').value = '';
+            document.getElementById('clientPhone').value = '';
+            document.getElementById('clientEmail').value = '';
+            document.getElementById('modalClient').classList.remove('hidden');
+        }
+
+        async function handleSaveClient(e) {
+            e.preventDefault();
+            const name = document.getElementById('clientCorporateName').value.trim();
+            const cnpj = document.getElementById('clientCnpj').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const email = document.getElementById('clientEmail').value.trim();
+
+            try {
+                await db.collection('clientes_ti').add({
+                    corporateName: name,
+                    cnpj: cnpj,
+                    phone: phone,
+                    email: email,
+                    createdAt: new Date().toISOString()
+                });
+                closeModal('modalClient');
+            } catch(err) {
+                alert("Erro ao salvar cliente: " + err.message);
+            }
+        }
+
+        async function deleteClient(id) {
+            if (confirm("Excluir este cliente e seus históricos?")) {
+                await db.collection('clientes_ti').doc(id).delete();
+            }
+        }
+
+        function renderClientsTable() {
+            const body = document.getElementById('clientsTableBody');
+            if (clientsList.length === 0) {
+                body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 text-xs">Nenhum cliente empresa cadastrado.</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = clientsList.map(c => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4 font-bold text-slate-800">${escapeHtml(c.corporateName)}</td>
+                    <td class="p-4 text-slate-600 font-mono text-xs">${escapeHtml(c.cnpj)}</td>
+                    <td class="p-4 text-slate-600">${escapeHtml(c.phone)}</td>
+                    <td class="p-4 text-slate-600">${escapeHtml(c.email)}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="deleteClient('${c.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateClientSelects() {
+            const selects = [document.getElementById('ticketClientId'), document.getElementById('reportClientSelect')];
+            selects.forEach(select => {
+                if (!select) return;
+                select.innerHTML = `<option value="">-- Selecione uma Empresa --</option>` + 
+                    clientsList.map(c => `<option value="${c.id}">${escapeHtml(c.corporateName)} (${escapeHtml(c.cnpj)})</option>`).join('');
+            });
+        }
+
+        // --- TICKETS MANAGEMENT ---
+        function openNewTicketModal() {
+            if (clientsList.length === 0) {
+                alert("Cadastre pelo menos um cliente antes de abrir chamados.");
+                switchTab('clients');
+                return;
+            }
+            document.getElementById('ticketSerial').value = '';
+            document.getElementById('ticketHours').value = '1.0';
+            document.getElementById('ticketProblem').value = '';
+            document.getElementById('modalTicket').classList.remove('hidden');
+        }
+
+        async function handleSaveTicket(e) {
+            e.preventDefault();
+            const clientId = document.getElementById('ticketClientId').value;
+            const serial = document.getElementById('ticketSerial').value.trim().toUpperCase();
+            const hours = parseFloat(document.getElementById('ticketHours').value) || 0;
+            const problem = document.getElementById('ticketProblem').value.trim();
+
+            const client = clientsList.find(c => c.id === clientId);
+
+            try {
+                await db.collection('chamados_ti').add({
+                    clientId: clientId,
+                    clientName: client ? client.corporateName : 'Desconhecido',
+                    serialNumber: serial,
+                    hours: hours,
+                    problem: problem,
+                    solution: '',
+                    status: 'open', // 'open' or 'closed'
+                    createdAt: new Date().toISOString()
+                });
+                closeModal('modalTicket');
+            } catch(err) {
+                alert("Erro ao abrir chamado: " + err.message);
+            }
+        }
+
+        function openResolveModal(ticketId, currentHours) {
+            document.getElementById('resolveTicketId').value = ticketId;
+            document.getElementById('resolveHours').value = currentHours || 1.0;
+            document.getElementById('resolveSolution').value = '';
+            document.getElementById('modalResolve').classList.remove('hidden');
+        }
+
+        async function handleFinalizeTicket(e) {
+            e.preventDefault();
+            const ticketId = document.getElementById('resolveTicketId').value;
+            const finalHours = parseFloat(document.getElementById('resolveHours').value);
+            const solution = document.getElementById('resolveSolution').value.trim();
+
+            try {
+                await db.collection('chamados_ti').doc(ticketId).update({
+                    hours: finalHours,
+                    solution: solution,
+                    status: 'closed',
+                    closedAt: new Date().toISOString()
+                });
+                closeModal('modalResolve');
+            } catch(err) {
+                alert("Erro ao finalizar chamado: " + err.message);
+            }
+        }
+
+        function filterTicketStatus(status) {
+            currentStatusFilter = status;
+            ['all', 'open', 'closed'].forEach(s => {
+                const btn = document.getElementById(`filterStatus-${s}`);
+                if (s === status) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50";
+                }
+            });
+            renderTicketsGrid();
+        }
+
+        function renderTicketsGrid() {
+            const grid = document.getElementById('ticketsGrid');
+            let filtered = ticketsList;
+
+            if (currentStatusFilter !== 'all') {
+                filtered = ticketsList.filter(t => t.status === currentStatusFilter);
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full bg-white p-8 rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-xs">Nenhum chamado técnico encontrado neste filtro.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(t => {
+                const isClosed = t.status === 'closed';
+                const dateStr = new Date(t.createdAt).toLocaleDateString('pt-BR');
+
+                return `
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-4">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-start">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${isClosed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                    ${isClosed ? 'FINALIZADO / ARQUIVADO' : 'EM ABERTO'}
+                                </span>
+                                <span class="text-[11px] font-mono text-slate-400">${dateStr}</span>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm leading-snug">${escapeHtml(t.clientName)}</h4>
+                                <span class="inline-block bg-slate-100 text-slate-600 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-200 mt-1">
+                                    S/N: ${escapeHtml(t.serialNumber)}
+                                </span>
+                            </div>
+
+                            <div class="space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+                                <p class="text-slate-500 font-semibold text-[10px] uppercase">Problema Inicial:</p>
+                                <p class="text-slate-800">${escapeHtml(t.problem)}</p>
+                                ${isClosed ? `
+                                    <div class="pt-2 border-t border-slate-200 mt-2">
+                                        <p class="text-emerald-700 font-semibold text-[10px] uppercase">Solução Aplicada:</p>
+                                        <p class="text-slate-700">${escapeHtml(t.solution)}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-600 font-medium">Tempo: <strong class="text-brand-600 font-mono font-bold">${t.hours}h</strong></span>
+                            ${!isClosed ? `
+                                <button onclick="openResolveModal('${t.id}', ${t.hours})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                                    Finalizar Chamado
+                                </button>
+                            ` : `
+                                <span class="text-[10px] text-slate-400"><i class="fa-solid fa-box-archive mr-1"></i>Arquivado</span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- SERIAL NUMBER LOOKUP ---
+        function searchSerialHistory() {
+            const query = document.getElementById('serialSearchInput').value.trim().toUpperCase();
+            const container = document.getElementById('serialResultsContainer');
+
+            if (!query) {
+                alert("Digite um número de série.");
+                return;
+            }
+
+            const matches = ticketsList.filter(t => t.serialNumber && t.serialNumber.toUpperCase().includes(query));
+
+            if (matches.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
+                        Nenhum chamado anterior encontrado para o número de série <strong>${escapeHtml(query)}</strong>.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-xs text-blue-900 font-medium">
+                    Encontrados <strong>${matches.length}</strong> registros de manutenção para o N/S <strong>${escapeHtml(query)}</strong>:
+                </div>
+                <div class="space-y-3">
+                    ${matches.map(t => `
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs">
+                            <div class="flex justify-between font-bold text-slate-800">
+                                <span>${escapeHtml(t.clientName)}</span>
+                                <span class="font-mono text-slate-400">${new Date(t.createdAt).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                            <p><strong>Problema:</strong> ${escapeHtml(t.problem)}</p>
+                            <p class="text-emerald-700"><strong>Solução:</strong> ${escapeHtml(t.solution || 'Em andamento')}</p>
+                            <div class="text-right text-[11px] text-slate-500 font-mono">Horas gastas: ${t.hours}h</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // --- MONTHLY REPORTS ---
+        function generateReport() {
+            const clientId = document.getElementById('reportClientSelect').value;
+            const monthVal = document.getElementById('reportMonthSelect').value; // YYYY-MM
+
+            if (!clientId || !monthVal) {
+                alert("Selecione o cliente e o mês de referência.");
+                return;
+            }
+
+            const client = clientsList.find(c => c.id === clientId);
+            const [year, month] = monthVal.split('-');
+
+            const filtered = ticketsList.filter(t => {
+                if (t.clientId !== clientId) return false;
+                const d = new Date(t.createdAt);
+                return d.getFullYear() == year && (d.getMonth() + 1) == parseInt(month);
+            });
+
+            let totalHours = 0;
+            filtered.forEach(t => totalHours += (t.hours || 0));
+
+            document.getElementById('reportClientTitle').innerText = client ? client.corporateName : '';
+            document.getElementById('reportPeriodText').innerText = `Período: ${month}/${year} | CNPJ: ${client ? client.cnpj : ''}`;
+            document.getElementById('reportTotalHours').innerText = `${totalHours.toFixed(2)}h`;
+
+            const tbody = document.getElementById('reportTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Nenhum chamado registrado para este cliente no mês selecionado.</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map(t => `
+                    <tr>
+                        <td class="p-3 text-slate-600 font-mono">${new Date(t.createdAt).toLocaleDateString('pt-BR')}</td>
+                        <td class="p-3 font-mono font-bold text-slate-700">${escapeHtml(t.serialNumber)}</td>
+                        <td class="p-3 text-slate-800">${escapeHtml(t.problem)}</td>
+                        <td class="p-3 text-slate-700">${escapeHtml(t.solution || 'Pendente')}</td>
+                        <td class="p-3 text-right font-bold text-brand-600 font-mono">${t.hours}h</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('reportOutput').classList.remove('hidden');
+        }
+
+        // --- UI HELPERS ---
+        function switchTab(tabName) {
+            ['tickets', 'clients', 'equipment', 'reports'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (btn) btn.className = "px-4 py-2 rounded-lg font-semibold transition text-slate-300 hover:text-white";
+            });
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
+            if (activeBtn) activeBtn.className = "px-4 py-2 rounded-lg font-semibold transition bg-brand-600 text-white";
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text || '';
+            return div.innerHTML;
+        }
+
+        // Set default report month to current
+        document.getElementById('reportMonthSelect').value = new Date().toISOString().slice(0,7);
+    </script>
+</body>
+</html>
