@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,8 +28,8 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col antialiased">
 
-    <!-- Ecrã de Login -->
-    <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <!-- Tela de Login -->
+    <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-6">
             <div class="text-center space-y-2">
                 <div class="inline-flex p-3 bg-brand-500/10 text-brand-500 rounded-xl border border-brand-500/20 mb-2">
@@ -42,7 +42,6 @@
             <!-- Alerta de Erro de Autenticação -->
             <div id="authError" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-xl leading-relaxed"></div>
 
-            <!-- Botões de Provedores -->
             <div class="space-y-3">
                 <button type="button" onclick="loginWithProvider('google')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-3 text-sm">
                     <i class="fa-brands fa-google text-red-400"></i> Entrar com Google / Gmail
@@ -58,21 +57,20 @@
                 <div class="flex-grow border-t border-slate-800"></div>
             </div>
 
-            <!-- Formulário E-mail e Senha -->
-            <div class="space-y-4">
+            <form onsubmit="event.preventDefault();" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">E-mail Corporativo</label>
-                    <input type="email" id="authEmail" placeholder="admin@empresa.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
+                    <input type="email" id="authEmail" placeholder="admin@empresa.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Senha (mín. 6 caracteres)</label>
-                    <input type="password" id="authPass" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
+                    <input type="password" id="authPass" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
                 </div>
                 <div class="flex gap-3">
                     <button type="button" onclick="handleEmailAuth('login')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">Entrar</button>
-                    <button type="button" onclick="handleEmailAuth('register')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition border border-slate-700">Registar</button>
+                    <button type="button" onclick="handleEmailAuth('register')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition border border-slate-700">Cadastrar</button>
                 </div>
-            </div>
+            </form>
 
             <div class="pt-2 border-t border-slate-800/80 text-center">
                 <button type="button" onclick="bypassAuth()" class="text-xs text-brand-500 hover:underline">
@@ -82,8 +80,9 @@
         </div>
     </div>
 
-    <!-- Aplicação Principal -->
+    <!-- Aplicação Principal (Oculta até Autenticar) -->
     <div id="appScreen" class="hidden min-h-screen flex flex-col">
+        <!-- Header -->
         <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -99,6 +98,7 @@
                     </div>
                 </div>
 
+                <!-- Menu de Navegação -->
                 <nav class="hidden md:flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-medium">
                     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3 py-1.5 rounded-lg text-white bg-brand-600">Dashboard</button>
                     <button onclick="switchTab('clientes')" id="nav-clientes" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Clientes (PJ)</button>
@@ -113,7 +113,9 @@
             </div>
         </header>
 
+        <!-- Conteúdo Principal -->
         <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+            
             <!-- Dashboard Tab -->
             <div id="tab-dashboard" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -127,4 +129,422 @@
                     </div>
                     <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
                         <p class="text-xs text-slate-400 font-semibold uppercase">Horas Técnicas (Mês)</p>
-                        <h3 id="statHorasMes" class="text-2xl font
+                        <h3 id="statHorasMes" class="text-2xl font-bold text-emerald-400 mt-1">0.0h</h3>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Últimos Chamados Registrados</h3>
+                    <div id="recentTicketsList" class="space-y-2">
+                        <p class="text-xs text-slate-500">Nenhum chamado aberto recentemente.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clientes Tab -->
+            <div id="tab-clientes" class="hidden space-y-6">
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Cadastrar Novo Cliente (PJ)</h3>
+                    <form onsubmit="saveCliente(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="cliRazao" placeholder="Razão Social" required class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-brand-500">
+                        <input type="text" id="cliCnpj" placeholder="CNPJ (00.000.000/0001-00)" required class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-brand-500">
+                        <input type="text" id="cliContato" placeholder="Nome do Contato / Responsável" class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-brand-500">
+                        <input type="text" id="cliFone" placeholder="Telefone / WhatsApp" class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-brand-500">
+                        <button type="submit" id="btnSaveCliente" class="md:col-span-2 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Salvar Cliente</button>
+                    </form>
+                </div>
+
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Empresas Cadastradas</h3>
+                    <div id="clientesList" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- Chamados & N/S Tab -->
+            <div id="tab-chamados" class="hidden space-y-6">
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Abrir Chamado Técnico</h3>
+                    <form onsubmit="saveChamado(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Cliente / Empresa</label>
+                                <select id="ticketCliente" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-brand-500"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Número de Série (N/S) do Equipamento</label>
+                                <input type="text" id="ticketSerial" placeholder="Ex: SN-987654321" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Problema Relatado</label>
+                            <textarea id="ticketProblema" rows="3" placeholder="Descreva a falha ou solicitação do cliente..." required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none resize-none focus:border-brand-500"></textarea>
+                        </div>
+                        <button type="submit" id="btnSaveChamado" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Abrir Chamado</button>
+                    </form>
+                </div>
+
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <h3 class="font-bold text-white text-base">Lista de Chamados</h3>
+                        <input type="text" id="searchSerial" oninput="renderChamados()" placeholder="🔍 Pesquisar por Número de Série (N/S)..." class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white outline-none w-full md:w-64 focus:border-brand-500">
+                    </div>
+                    <div id="chamadosList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Relatórios Tab -->
+            <div id="tab-relatorios" class="hidden space-y-6">
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 class="font-bold text-white text-base">Relatório Mensal de Horas Técnicas</h3>
+                    <div id="relatorioContent" class="space-y-3">
+                        <p class="text-xs text-slate-500">Selecione e encerre chamados para gerar a consolidação de horas.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0rK78NwUU7GUqq9Vwfywfw3gBeOrbJ-w",
+            authDomain: "diario-estudos-app.firebaseapp.com",
+            projectId: "diario-estudos-app",
+            storageBucket: "diario-estudos-app.firebasestorage.app",
+            messagingSenderId: "736000609268",
+            appId: "1:736000609268:web:08ac8c9b183274839ac7a1"
+        };
+
+        let db = null;
+        let currentUser = null;
+        let useFirestore = false;
+        let unsubClientes = null;
+        let unsubChamados = null;
+
+        let clientes = JSON.parse(localStorage.getItem('tech_clientes') || '[]');
+        let chamados = JSON.parse(localStorage.getItem('tech_chamados') || '[]');
+
+        function showAuthError(msg) {
+            const errBox = document.getElementById('authError');
+            if (errBox) {
+                errBox.innerText = msg;
+                errBox.classList.remove('hidden');
+            } else {
+                alert(msg);
+            }
+        }
+
+        function setDbStatus(isCloud, message) {
+            const badge = document.getElementById('dbStatusBadge');
+            if (!badge) return;
+            if (isCloud) {
+                badge.className = "text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold";
+                badge.innerHTML = `<i class="fa-solid fa-cloud mr-1"></i>${message || 'Cloud Firestore'}`;
+            } else {
+                badge.className = "text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold";
+                badge.innerHTML = `<i class="fa-solid fa-hard-drive mr-1"></i>${message || 'LocalStorage'}`;
+            }
+        }
+
+        // Aviso caso aberto diretamente via protocolo file://
+        if (window.location.protocol === 'file:') {
+            showAuthError("⚠️ Aviso: Arquivo aberto via file://. Para autenticar com Firebase, execute em um servidor local (ex: extensão Live Server no VS Code ou http://localhost).");
+        }
+
+        // Inicialização Segura do Firebase + Auth + Firestore
+        try {
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+
+                firebase.auth().onAuthStateChanged(user => {
+                    if (user) {
+                        currentUser = user;
+                        useFirestore = true;
+                        document.getElementById('userBadge').innerText = user.email || user.displayName || 'Técnico Autenticado';
+                        document.getElementById('authScreen').classList.add('hidden');
+                        document.getElementById('appScreen').classList.remove('hidden');
+                        initFirestoreListeners();
+                    }
+                });
+            }
+        } catch(e) {
+            showAuthError("Erro ao inicializar Firebase: " + e.message);
+        }
+
+        // Sincronização em Tempo Real com o Firestore
+        function initFirestoreListeners() {
+            if (!db) return;
+            setDbStatus(true, 'Cloud Firestore');
+
+            if (unsubClientes) unsubClientes();
+            if (unsubChamados) unsubChamados();
+
+            unsubClientes = db.collection('tech_clientes')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    localStorage.setItem('tech_clientes', JSON.stringify(clientes));
+                    renderAll();
+                }, err => {
+                    console.warn("Aviso Firestore (Clientes):", err.message);
+                    useFirestore = false;
+                    setDbStatus(false, 'Local (Regras Firestore restritas)');
+                    renderAll();
+                });
+
+            unsubChamados = db.collection('tech_chamados')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    chamados = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    localStorage.setItem('tech_chamados', JSON.stringify(chamados));
+                    renderAll();
+                }, err => {
+                    console.warn("Aviso Firestore (Chamados):", err.message);
+                    useFirestore = false;
+                    setDbStatus(false, 'Local (Regras Firestore restritas)');
+                    renderAll();
+                });
+        }
+
+        function bypassAuth() {
+            useFirestore = false;
+            setDbStatus(false, 'Modo Local');
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+            document.getElementById('userBadge').innerText = 'Modo de Teste / Local';
+            renderAll();
+        }
+
+        function loginWithProvider(provider) {
+            document.getElementById('authError')?.classList.add('hidden');
+            try {
+                let p = provider === 'google' 
+                    ? new firebase.auth.GoogleAuthProvider() 
+                    : new firebase.auth.OAuthProvider('microsoft.com');
+                
+                firebase.auth().signInWithPopup(p).catch(err => {
+                    console.error("Erro OAuth:", err);
+                    showAuthError(`Falha no login (${provider}): [${err.code}] ${err.message}`);
+                });
+            } catch(e) {
+                showAuthError("Erro ao acionar provedor: " + e.message);
+            }
+        }
+
+        function handleEmailAuth(mode) {
+            document.getElementById('authError')?.classList.add('hidden');
+            const email = document.getElementById('authEmail').value.trim();
+            const pass = document.getElementById('authPass').value;
+
+            if (!email || !pass) {
+                showAuthError("Preencha o e-mail e a senha.");
+                return;
+            }
+            if (pass.length < 6) {
+                showAuthError("A senha deve ter pelo menos 6 caracteres.");
+                return;
+            }
+
+            const authPromise = mode === 'login'
+                ? firebase.auth().signInWithEmailAndPassword(email, pass)
+                : firebase.auth().createUserWithEmailAndPassword(email, pass);
+
+            authPromise.catch(err => {
+                console.error("Erro Email Auth:", err);
+                const mensagens = {
+                    'auth/operation-not-allowed': 'O método E-mail/Senha não está ativado no Firebase Console (Authentication > Sign-in method).',
+                    'auth/user-not-found': 'Usuário não encontrado. Clique em "Cadastrar" primeiro.',
+                    'auth/wrong-password': 'Senha incorreta.',
+                    'auth/invalid-credential': 'Credenciais inválidas. Verifique seu e-mail e senha ou clique em "Cadastrar" se for seu primeiro acesso.',
+                    'auth/email-already-in-use': 'Este e-mail já está cadastrado. Clique no botão "Entrar".',
+                    'auth/operation-not-supported-in-this-environment': 'Ambiente não suportado (file://). Abra o arquivo usando um servidor HTTP local (ex: Live Server / localhost).'
+                };
+                showAuthError(mensagens[err.code] || `Erro Firebase [${err.code}]: ${err.message}`);
+            });
+        }
+
+        function logout() {
+            if (unsubClientes) unsubClientes();
+            if (unsubChamados) unsubChamados();
+            try { 
+                firebase.auth().signOut().then(() => location.reload()); 
+            } catch(e) { 
+                location.reload(); 
+            }
+        }
+
+        function switchTab(tab) {
+            ['dashboard', 'clientes', 'chamados', 'relatorios'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('nav-' + t).className = 'px-3 py-1.5 rounded-lg text-slate-400 hover:text-white';
+            });
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            document.getElementById('nav-' + tab).className = 'px-3 py-1.5 rounded-lg text-white bg-brand-600';
+        }
+
+        // Salvar Cliente (Firestore + Fallback LocalStorage)
+        async function saveCliente(e) {
+            e.preventDefault();
+            const novoCliente = {
+                razao: document.getElementById('cliRazao').value.trim(),
+                cnpj: document.getElementById('cliCnpj').value.trim(),
+                contato: document.getElementById('cliContato').value.trim(),
+                fone: document.getElementById('cliFone').value.trim(),
+                createdAt: Date.now(),
+                criadoPor: currentUser ? currentUser.email : 'local'
+            };
+
+            const btn = document.getElementById('btnSaveCliente');
+            btn.disabled = true;
+
+            try {
+                if (useFirestore && db) {
+                    await db.collection('tech_clientes').add(novoCliente);
+                } else {
+                    clientes.unshift({ id: Date.now().toString(), ...novoCliente });
+                    localStorage.setItem('tech_clientes', JSON.stringify(clientes));
+                    renderAll();
+                }
+                document.getElementById('cliRazao').value = '';
+                document.getElementById('cliCnpj').value = '';
+                document.getElementById('cliContato').value = '';
+                document.getElementById('cliFone').value = '';
+            } catch (err) {
+                alert("Erro ao salvar no Firestore (verifique as Rules do banco): " + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Salvar Chamado (Firestore + Fallback LocalStorage)
+        async function saveChamado(e) {
+            e.preventDefault();
+            const clienteId = document.getElementById('ticketCliente').value;
+            if (!clienteId) {
+                alert("Cadastre e selecione um cliente antes de abrir um chamado.");
+                return;
+            }
+
+            const novoChamado = {
+                clienteId: clienteId,
+                serial: document.getElementById('ticketSerial').value.trim(),
+                problema: document.getElementById('ticketProblema').value.trim(),
+                status: 'Aberto',
+                horas: 0,
+                solucao: '',
+                data: new Date().toLocaleDateString('pt-BR'),
+                createdAt: Date.now(),
+                tecnico: currentUser ? currentUser.email : 'local'
+            };
+
+            const btn = document.getElementById('btnSaveChamado');
+            btn.disabled = true;
+
+            try {
+                if (useFirestore && db) {
+                    await db.collection('tech_chamados').add(novoChamado);
+                } else {
+                    chamados.unshift({ id: Date.now().toString(), ...novoChamado });
+                    localStorage.setItem('tech_chamados', JSON.stringify(chamados));
+                    renderAll();
+                }
+                document.getElementById('ticketSerial').value = '';
+                document.getElementById('ticketProblema').value = '';
+            } catch (err) {
+                alert("Erro ao salvar chamado no Firestore: " + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Finalizar Chamado (Firestore + Fallback LocalStorage)
+        async function finalizarChamado(id) {
+            const inputHoras = prompt("Informe o número de Horas Técnicas gastas (ex: 1.5):", "1.0");
+            if (inputHoras === null) return;
+            const horas = parseFloat(inputHoras.replace(',', '.'));
+            const solucao = prompt("Informe a solução técnica aplicada:");
+            if (isNaN(horas) || !solucao) return;
+
+            try {
+                if (useFirestore && db) {
+                    await db.collection('tech_chamados').doc(id).update({
+                        status: 'Concluído',
+                        horas: horas,
+                        solucao: solucao.trim(),
+                        fechadoEm: Date.now()
+                    });
+                } else {
+                    const idx = chamados.findIndex(c => c.id === id);
+                    if (idx !== -1) {
+                        chamados[idx].status = 'Concluído';
+                        chamados[idx].horas = horas;
+                        chamados[idx].solucao = solucao.trim();
+                        localStorage.setItem('tech_chamados', JSON.stringify(chamados));
+                        renderAll();
+                    }
+                }
+            } catch (err) {
+                alert("Erro ao atualizar chamado no Firestore: " + err.message);
+            }
+        }
+
+        function renderAll() {
+            // Estatísticas
+            document.getElementById('statClientes').innerText = clientes.length;
+            document.getElementById('statChamadosAbertos').innerText = chamados.filter(c => c.status === 'Aberto').length;
+            const totalHoras = chamados.reduce((acc, c) => acc + (Number(c.horas) || 0), 0);
+            document.getElementById('statHorasMes').innerText = totalHoras.toFixed(1) + 'h';
+
+            // Select de Clientes
+            const select = document.getElementById('ticketCliente');
+            select.innerHTML = clientes.length 
+                ? clientes.map(c => `<option value="${c.id}">${c.razao} (${c.cnpj})</option>`).join('') 
+                : '<option value="">Cadastre um cliente primeiro</option>';
+
+            // Lista de Clientes
+            document.getElementById('clientesList').innerHTML = clientes.length ? clientes.map(c => `
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                    <div>
+                        <div class="font-bold text-white">${c.razao}</div>
+                        <div class="text-slate-400">CNPJ: ${c.cnpj} | Contato: ${c.contato || 'N/I'} (${c.fone || 'N/I'})</div>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-xs text-slate-500">Nenhuma empresa cadastrada.</p>';
+
+            renderChamados();
+        }
+
+        function renderChamados() {
+            const search = (document.getElementById('searchSerial')?.value || '').toLowerCase();
+            const filtered = chamados.filter(c => (c.serial || '').toLowerCase().includes(search));
+
+            const listHtml = filtered.length ? filtered.map(c => {
+                const cli = clientes.find(item => item.id === c.clienteId) || { razao: 'Cliente Não Encontrado' };
+                return `
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-brand-500 font-bold">[N/S: ${c.serial}]</span>
+                                <span class="text-white font-semibold ml-2">${cli.razao}</span>
+                                <span class="text-slate-500 text-[10px] ml-2">${c.data || ''}</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.status === 'Aberto' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">${c.status}</span>
+                        </div>
+                        <div class="text-slate-300"><strong>Problema:</strong> ${c.problema}</div>
+                        ${c.solucao ? `<div class="text-slate-400 bg-slate-950 p-2 rounded border border-slate-800"><strong>Solução:</strong> ${c.solucao} (${c.horas}h)</div>` : ''}
+                        ${c.status === 'Aberto' ? `<button onclick="finalizarChamado('${c.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded text-[11px] transition">Encerrar Chamado</button>` : ''}
+                    </div>
+                `;
+            }).join('') : '<p class="text-xs text-slate-500">Nenhum chamado encontrado.</p>';
+
+            document.getElementById('chamadosList').innerHTML = listHtml;
+            document.getElementById('recentTicketsList').innerHTML = listHtml;
+            document.getElementById('relatorioContent').innerHTML = listHtml;
+        }
+    </script>
+</body>
+</html>
