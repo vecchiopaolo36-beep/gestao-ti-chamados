@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,8 +28,8 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col antialiased">
 
-    <!-- Tela de Login -->
-    <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+    <!-- Ecrã de Login -->
+    <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-6">
             <div class="text-center space-y-2">
                 <div class="inline-flex p-3 bg-brand-500/10 text-brand-500 rounded-xl border border-brand-500/20 mb-2">
@@ -42,5 +42,89 @@
             <!-- Alerta de Erro de Autenticação -->
             <div id="authError" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-xl leading-relaxed"></div>
 
+            <!-- Botões de Provedores -->
             <div class="space-y-3">
-                <button type="button" onclick="loginWithProvider('
+                <button type="button" onclick="loginWithProvider('google')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-3 text-sm">
+                    <i class="fa-brands fa-google text-red-400"></i> Entrar com Google / Gmail
+                </button>
+                <button type="button" onclick="loginWithProvider('m365')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-3 text-sm">
+                    <i class="fa-brands fa-microsoft text-blue-400"></i> Entrar com Microsoft 365
+                </button>
+            </div>
+
+            <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-slate-800"></div>
+                <span class="flex-shrink mx-4 text-slate-500 text-[10px] uppercase font-semibold">Ou E-mail e Senha</span>
+                <div class="flex-grow border-t border-slate-800"></div>
+            </div>
+
+            <!-- Formulário E-mail e Senha -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">E-mail Corporativo</label>
+                    <input type="email" id="authEmail" placeholder="admin@empresa.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Senha (mín. 6 caracteres)</label>
+                    <input type="password" id="authPass" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:border-brand-500 outline-none">
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="handleEmailAuth('login')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">Entrar</button>
+                    <button type="button" onclick="handleEmailAuth('register')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition border border-slate-700">Registar</button>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800/80 text-center">
+                <button type="button" onclick="bypassAuth()" class="text-xs text-brand-500 hover:underline">
+                    <i class="fa-solid fa-bolt mr-1"></i> Entrar sem login (Modo Offline / LocalStorage)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicação Principal -->
+    <div id="appScreen" class="hidden min-h-screen flex flex-col">
+        <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-600 text-white p-2 rounded-xl">
+                        <i class="fa-solid fa-headset text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-sm text-white leading-tight">TechService Manager</h1>
+                        <div class="flex items-center gap-2">
+                            <p class="text-[10px] text-slate-400">Cluster TI - Painel Técnico</p>
+                            <span id="dbStatusBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-semibold">Offline</span>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="hidden md:flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3 py-1.5 rounded-lg text-white bg-brand-600">Dashboard</button>
+                    <button onclick="switchTab('clientes')" id="nav-clientes" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Clientes (PJ)</button>
+                    <button onclick="switchTab('chamados')" id="nav-chamados" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Chamados & N/S</button>
+                    <button onclick="switchTab('relatorios')" id="nav-relatorios" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">Relatórios Mensais</button>
+                </nav>
+
+                <div class="flex items-center gap-3">
+                    <span id="userBadge" class="text-xs text-slate-400 font-medium">Técnico</span>
+                    <button onclick="logout()" title="Sair" class="text-slate-400 hover:text-red-400 p-2 text-sm transition"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Clientes Ativos</p>
+                        <h3 id="statClientes" class="text-2xl font-bold text-white mt-1">0</h3>
+                    </div>
+                    <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Chamados Abertos</p>
+                        <h3 id="statChamadosAbertos" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+                    </div>
+                    <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Horas Técnicas (Mês)</p>
+                        <h3 id="statHorasMes" class="text-2xl font
